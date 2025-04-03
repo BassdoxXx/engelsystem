@@ -33,8 +33,6 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: engelsystem-cloudflared
     restart: unless-stopped
-    environment:
-      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
     command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
 
 volumes:
