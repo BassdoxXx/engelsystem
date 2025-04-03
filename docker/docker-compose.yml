@@ -1,39 +1,39 @@
-version: "3.8"
-
 services:
-  es_database:
-    image: mariadb:10.6
-    container_name: engelsystem-es_database
-    restart: unless-stopped
-    volumes:
-      - engelsystem_db:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: engelsystem
-      MYSQL_DATABASE: engelsystem
-      MYSQL_USER: engelsystem
-      MYSQL_PASSWORD: engelsystem
-
   es_server:
+    image: es_server
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: engelsystem-es_server
-    depends_on:
-      - es_database
-    restart: unless-stopped
+    environment:
+      MYSQL_TYPE: mariadb
+      MYSQL_HOST: es_database
+      MYSQL_USER: engelsystem
+      MYSQL_PASSWORD: engelsystem
+      MYSQL_DATABASE: engelsystem
     ports:
       - "5080:80"
+    env_file: deployment.env
+    networks:
+      - database
+      - internet
+    depends_on:
+      - es_database
+  es_database:
+    image: mariadb:10.7
     environment:
-      DB_HOST: es_database
-      DB_NAME: engelsystem
-      DB_USER: engelsystem
-      DB_PASSWORD: engelsystem
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: engelsystem-cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
-
+      MYSQL_DATABASE: engelsystem
+      MYSQL_USER: engelsystem
+      MYSQL_PASSWORD: engelsystem
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+      MYSQL_INITDB_SKIP_TZINFO: "yes"
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - database
 volumes:
-  engelsystem_db:
+  db: {}
+
+networks:
+  database:
+    internal: true
+  internet:
