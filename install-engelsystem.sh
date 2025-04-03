@@ -41,48 +41,44 @@ if [ ! -d "$TARGET_DIR" ]; then
     echo "📥 Klone Engelsystem..."
     git clone $REPO_URL $TARGET_DIR
 else
-    cd $TARGET_DIR
     echo "🔁 Hole aktuelle Version von GitHub..."
+    cd $TARGET_DIR
     git fetch origin
     git reset --hard origin/main
 fi
 
-cd $TARGET_DIR/docker
+cd "$TARGET_DIR/docker"
 
-# === 3. .env schreiben (nur wenn nicht vorhanden) ===
-if [ ! -f ".env" ]; then
-  echo "🔐 Erstelle .env mit Tunnel-Token..."
-  cat > .env <<EOF
-TUNNEL_TOKEN=$TUNNEL_TOKEN
+# === 3. .env schreiben ===
+echo "🔐 Erstelle .env mit Tunnel-Token..."
+cat > .env <<EOF
+CF_TUNNEL_TOKEN=$TUNNEL_TOKEN
 COMPOSE_PROJECT_NAME=engelsystem
 EOF
+
+# === 4. Prüfen ob Container schon laufen ===
+if docker compose ps | grep -q 'es_server'; then
+    echo "♻️ Container laufen bereits – führe Rebuild & Restart durch..."
+    docker compose down
+    docker compose --env-file .env up -d
 else
-  echo "🛡️  .env existiert bereits – unverändert."
+    echo "🐳 Baue Docker-Image (Erstinstallation)..."
+    docker compose --env-file .env build
+
+    echo "🚀 Starte Engelsystem..."
+    docker compose --env-file .env up -d
 fi
 
-# === 4. Prüfe, ob bereits Container laufen ===
-if docker compose ps --status=running | grep -q es_server; then
-  echo "🔄 Engelsystem ist bereits installiert – starte neu..."
-  docker compose down
-  docker compose up -d
-else
-  echo "🐳 Baue Docker-Image (Erstinstallation)..."
-  docker compose build
+# === 5. Warte auf Datenbank im Container ===
+echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
+until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
+    printf "."
+    sleep 1
+done
 
-  echo "🚀 Starte Engelsystem..."
-  docker compose up -d
-
-  # === 5. Warte auf Datenbank im Container ===
-  echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
-  until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
-      printf "."
-      sleep 1
-  done
-  echo ""
-
-  echo "🗃️  Führe Datenbank-Migration durch..."
-  docker compose exec es_server bin/migrate
-fi
+echo ""
+echo "🗃️  Führe Datenbank-Migration durch..."
+docker compose exec es_server bin/migrate
 
 # === 6. IP-Adresse anzeigen ===
 IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d/ -f1 | head -n1)
