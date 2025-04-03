@@ -50,11 +50,16 @@ fi
 cd "$TARGET_DIR/docker"
 
 # === 3. .env schreiben ===
-echo "🔐 Erstelle .env mit Tunnel-Token..."
-cat > .env <<EOF
+ENV_FILE=".env"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "🔐 Erstelle .env mit Tunnel-Token..."
+  cat > "$ENV_FILE" <<EOF
 CF_TUNNEL_TOKEN=$TUNNEL_TOKEN
 COMPOSE_PROJECT_NAME=engelsystem
 EOF
+else
+  echo "🛡️  .env existiert bereits – unverändert."
+fi
 
 # === 4. Prüfen ob Container schon laufen ===
 if docker compose ps | grep -q 'es_server'; then
