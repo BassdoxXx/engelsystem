@@ -41,10 +41,11 @@ if [ ! -d "$TARGET_DIR" ]; then
     echo "📥 Klone Engelsystem..."
     git clone $REPO_URL $TARGET_DIR
 else
-    cd $TARGET_DIR
-    echo "🔁 Hole aktuelle Version von GitHub..."
-    git fetch origin
+    cd "$TARGET_DIR"
+    echo "🔁 Setze lokale Änderungen zurück und hole aktuelle Version..."
+    git fetch --all
     git reset --hard origin/main
+    git clean -fd
 fi
 
 cd $TARGET_DIR/docker
