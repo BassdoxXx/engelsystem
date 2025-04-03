@@ -61,12 +61,11 @@ The Engelsystem can now be used.
 
 ### Docker
 
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BassdoxXx/engelsystem/main/proxmox/install-engelsystem-ct.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BassdoxXx/engelsystem/main/install-engelsystem.sh)"
 
 Wenn du dabei gleich deinen Tunnel-Token mitgeben willst, häng ihn hinten an (als Argument 1):
 
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BassdoxXx/engelsystem/main/proxmox/install-engelsystem-ct.sh)" -- "<DEIN_TUNNEL_TOKEN>"
-
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BassdoxXx/engelsystem/main/install-engelsystem.sh)" -- "<DEIN_TOKEN_HIER>"
 
 
 For instructions on how to build the Docker container for development, please consult the [DEVELOPMENT.md](DEVELOPMENT.md).
