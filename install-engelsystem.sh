@@ -41,8 +41,8 @@ if [ ! -d "$TARGET_DIR" ]; then
     echo "📥 Klone Engelsystem..."
     git clone $REPO_URL $TARGET_DIR
 else
-    echo "🔄 Repo-Update via git pull..."
     cd $TARGET_DIR
+    echo "🔁 Hole aktuelle Version von GitHub..."
     git fetch origin
     git reset --hard origin/main
 fi
