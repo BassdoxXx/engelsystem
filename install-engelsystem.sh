@@ -3,6 +3,13 @@ set -e
 
 echo "📦 Engelsystem Auto-Installer"
 
+# === 0. Tunnel-Token abfragen ===
+if [ -z "$1" ]; then
+  read -rp "🌐 Bitte gib deinen Cloudflare Tunnel-Token ein: " TUNNEL_TOKEN
+else
+  TUNNEL_TOKEN="$1"
+fi
+
 # === 1. Docker & Docker Compose installieren ===
 if ! command -v docker >/dev/null 2>&1 || ! command -v docker compose >/dev/null 2>&1; then
   echo "🔧 Docker wird installiert..."
@@ -42,16 +49,23 @@ fi
 
 cd $TARGET_DIR/docker
 
-# === 3. Build + Start Container ===
+# === 3. .env schreiben ===
+echo "🔐 Schreibe .env mit Token und Projektname..."
+cat > .env <<EOF
+TUNNEL_TOKEN=$TUNNEL_TOKEN
+COMPOSE_PROJECT_NAME=engelsystem
+EOF
+
+
+# === 4. Build + Start Container ===
 echo "🐳 Baue Docker-Image..."
 docker compose build
 
 echo "🚀 Starte Engelsystem..."
 docker compose up -d
 
-# === 4. Warte auf Datenbank im Container ===
+# === 5. Warte auf Datenbank im Container ===
 echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
-
 until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
     printf "."
     sleep 1
@@ -61,8 +75,7 @@ echo ""
 echo "🗃️  Führe Datenbank-Migration durch..."
 docker compose exec es_server bin/migrate
 
-
-# === 5. IP-Adresse anzeigen ===
+# === 6. IP-Adresse anzeigen ===
 IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d/ -f1 | head -n1)
 
 echo ""
