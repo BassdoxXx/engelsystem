@@ -41,22 +41,19 @@ if [ ! -d "$TARGET_DIR" ]; then
     echo "📥 Klone Engelsystem..."
     git clone $REPO_URL $TARGET_DIR
 else
-    cd "$TARGET_DIR"
-    echo "🔁 Setze lokale Änderungen zurück und hole aktuelle Version..."
-    git fetch --all
+    cd $TARGET_DIR
+    echo "🔁 Hole aktuelle Version von GitHub..."
+    git fetch origin
     git reset --hard origin/main
-    git clean -fd
 fi
 
-cd $TARGET_DIR/docker
-
-# === 3. .env schreiben ===
+# === 3. .env Datei in /docker schreiben ===
+cd "$TARGET_DIR/docker"
 echo "🔐 Schreibe .env mit Token und Projektname..."
 cat > .env <<EOF
-TUNNEL_TOKEN=$TUNNEL_TOKEN
+CF_TUNNEL_TOKEN=$TUNNEL_TOKEN
 COMPOSE_PROJECT_NAME=engelsystem
 EOF
-
 
 # === 4. Build + Start Container ===
 echo "🐳 Baue Docker-Image..."
@@ -69,7 +66,7 @@ docker compose up -d
 echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
 until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
     printf "."
-    sleep 1
+    sleep 5
 done
 
 echo ""
