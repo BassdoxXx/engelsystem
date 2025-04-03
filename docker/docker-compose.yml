@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
     environment:
       - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
 
 volumes:
   engelsystem_db:
