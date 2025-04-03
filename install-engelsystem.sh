@@ -47,31 +47,42 @@ else
     git reset --hard origin/main
 fi
 
-# === 3. .env Datei in /docker schreiben ===
-cd "$TARGET_DIR/docker"
-echo "🔐 Schreibe .env mit Token und Projektname..."
-cat > .env <<EOF
-CF_TUNNEL_TOKEN=$TUNNEL_TOKEN
+cd $TARGET_DIR/docker
+
+# === 3. .env schreiben (nur wenn nicht vorhanden) ===
+if [ ! -f ".env" ]; then
+  echo "🔐 Erstelle .env mit Tunnel-Token..."
+  cat > .env <<EOF
+TUNNEL_TOKEN=$TUNNEL_TOKEN
 COMPOSE_PROJECT_NAME=engelsystem
 EOF
+else
+  echo "🛡️  .env existiert bereits – unverändert."
+fi
 
-# === 4. Build + Start Container ===
-echo "🐳 Baue Docker-Image..."
-docker compose build
+# === 4. Prüfe, ob bereits Container laufen ===
+if docker compose ps --status=running | grep -q es_server; then
+  echo "🔄 Engelsystem ist bereits installiert – starte neu..."
+  docker compose down
+  docker compose up -d
+else
+  echo "🐳 Baue Docker-Image (Erstinstallation)..."
+  docker compose build
 
-echo "🚀 Starte Engelsystem..."
-docker compose up -d
+  echo "🚀 Starte Engelsystem..."
+  docker compose up -d
 
-# === 5. Warte auf Datenbank im Container ===
-echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
-until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
-    printf "."
-    sleep 5
-done
+  # === 5. Warte auf Datenbank im Container ===
+  echo "⏳ Warte, bis Datenbank im Container erreichbar ist..."
+  until docker compose exec es_database mysqladmin ping -h "localhost" --silent; do
+      printf "."
+      sleep 1
+  done
+  echo ""
 
-echo ""
-echo "🗃️  Führe Datenbank-Migration durch..."
-docker compose exec es_server bin/migrate
+  echo "🗃️  Führe Datenbank-Migration durch..."
+  docker compose exec es_server bin/migrate
+fi
 
 # === 6. IP-Adresse anzeigen ===
 IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d/ -f1 | head -n1)
