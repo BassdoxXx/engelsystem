@@ -43,8 +43,8 @@ if [ ! -d "$TARGET_DIR" ]; then
 else
     echo "🔄 Repo-Update via git pull..."
     cd $TARGET_DIR
-    git reset --hard
-    git pull
+    git fetch origin
+    git reset --hard origin/main
 fi
 
 cd $TARGET_DIR/docker
